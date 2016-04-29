@@ -52,7 +52,7 @@ class Plugin extends Base implements TaskInterface
 		$this->plgType = $type;
 
 		$this->source = $this->getSourceFolder() . "/plugins/" . $type . "/" . $name;
-		$this->target = $this->getBuildFolder() . "/plugins/" . $type . "/" . $name;
+		$this->target = $this->getBuildFolder();
 	}
 
 	/**

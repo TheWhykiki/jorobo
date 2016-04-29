@@ -1,19 +1,15 @@
 <?php
 /**
-* @package     JoRobo
-*
-* @copyright   Copyright (C) 2005 - 2016 Open Source Matters, Inc. All rights reserved.
-* @license     GNU General Public License version 2 or later; see LICENSE.txt
-*/
+ * @package     JoRobo
+ *
+ * @copyright   Copyright (C) 2005 - 2016 Open Source Matters, Inc. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 namespace Joomla\Jorobo\Tasks\Build;
 
-use Robo\Result;
-use Robo\Task\BaseTask;
-use Robo\Contract\TaskInterface;
-use Robo\Exception\TaskException;
-
 use Joomla\Jorobo\Tasks\JTask;
+use Robo\Contract\TaskInterface;
 
 /**
  * The supervisor
@@ -63,7 +59,7 @@ class Extension extends Base implements TaskInterface
 	/**
 	 * Initialize Build Task
 	 *
-	 * @param   String  $params  The target directory
+	 * @param   String $params The target directory
 	 */
 	public function __construct($params)
 	{
@@ -143,8 +139,8 @@ class Extension extends Base implements TaskInterface
 
 					while ($plugin = readdir($hdl2))
 					{
-						// Only folders
-						$p2 = $path . "/" . $entry;
+						// Only folders //$p2 = $path . "/" . $entry;
+						$p2 = $p . "/" . $plugin;
 
 						if (substr($plugin, 0, 1) == '.')
 						{
@@ -288,7 +284,8 @@ class Extension extends Base implements TaskInterface
 	{
 		// Check if we have component, module, plugin etc.
 		if (!file_exists($this->getSourceFolder() . "/administrator/components/com_" . $this->getExtensionName())
-			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName()))
+			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName())
+		)
 		{
 			$this->say("Extension has no component");
 			$this->hasComponent = false;

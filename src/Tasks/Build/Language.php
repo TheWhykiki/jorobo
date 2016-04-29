@@ -125,7 +125,7 @@ class Language extends Base implements TaskInterface
 
 		if ($this->hasAdminLang)
 		{
-			$map = $this->copyLanguage("administrator/language", $dest);
+			$map = $this->copyLanguage("language", $dest);
 			$this->addFiles('backendLanguage', $map);
 		}
 
@@ -166,12 +166,7 @@ class Language extends Base implements TaskInterface
 	{
 		if ($this->type == "com")
 		{
-			if ($this->hasAdminLang)
-			{
-				$this->_mkdir($this->getBuildFolder() . "/administrator/language");
-			}
-
-			if ($this->hasFrontLang)
+			if ($this->hasAdminLang || $this->hasFrontLang)
 			{
 				$this->_mkdir($this->getBuildFolder() . "/language");
 			}
@@ -186,7 +181,7 @@ class Language extends Base implements TaskInterface
 		{
 			$a = explode("_", $this->ext);
 
-			$this->_mkdir($this->getBuildFolder() . "/plugins/" . $a[1] . "/" . $a[2] . "/administrator/language");
+			$this->_mkdir($this->getBuildFolder() . "/plugins/" . $a[1] . "/" . $a[2] . "/language");
 		}
 
 		if ($this->type == "plug")
@@ -210,7 +205,15 @@ class Language extends Base implements TaskInterface
 	public function copyLanguage($dir, $target)
 	{
 		// Equals administrator/language or language
-		$path = $this->getSourceFolder() . "/" . $dir;
+		if ($this->hasAdminLang)
+		{
+			$path = $this->getSourceFolder() . "/administrator/" . $dir;
+		}
+		elseif ($this->hasFrontLang)
+		{
+			$path = $this->getSourceFolder() . "/" . $dir;
+		}
+
 		$files = array();
 
 		$hdl = opendir($path);
