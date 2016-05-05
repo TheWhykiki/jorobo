@@ -52,7 +52,7 @@ class Plugin extends Base implements TaskInterface
 		$this->plgType = $type;
 
 		$this->source = $this->getSourceFolder() . "/plugins/" . $type . "/" . $name;
-		$this->target = $this->getBuildFolder();
+		$this->target = $this->getBuildFolder() . "/plugin/plg_" . $type . "_" . $name;
 	}
 
 	/**
@@ -62,6 +62,7 @@ class Plugin extends Base implements TaskInterface
 	 */
 	public function run()
 	{
+		$plgName = "plg_" . $this->plgType . "_" . $this->plgName;
 		$this->say('Building plugin: ' . $this->plgName . " (" . $this->plgType . ")");
 
 		// Prepare directories
@@ -70,17 +71,21 @@ class Plugin extends Base implements TaskInterface
 		$files = $this->copyTarget($this->source, $this->target);
 
 		// Build media (relative path)
-		$media = $this->buildMedia("media/plg_" . $this->plgType . "_" . $this->plgName, 'plg_' . $this->plgType . "_" . $this->plgName);
+		$media = $this->buildMedia("media/" . $plgName, $plgName, "plugin");
 		$media->run();
 
 		$this->addFiles('media', $media->getResultFiles());
 
 		// Build language files
-		$language = $this->buildLanguage("plg_" . $this->plgType . "_" . $this->plgName);
+		$language = $this->buildLanguage($plgName);
 		$language->run();
 
 		// Update XML and script.php
 		$this->createInstaller($files);
+
+		// Create symlink to current folder
+		$this->_symlink($this->target, JPATH_BASE . "/dist/current");
+
 
 		return true;
 	}

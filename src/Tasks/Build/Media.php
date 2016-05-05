@@ -31,8 +31,6 @@ class Media extends Base implements TaskInterface
 
 	protected $fileMap = null;
 
-	protected $type = "com";
-
 	protected $extName = null;
 
 	/**
@@ -41,36 +39,14 @@ class Media extends Base implements TaskInterface
 	 * @param   String  $folder   The target directory
 	 * @param   String  $extName  The extension name
 	 */
-	public function __construct($folder, $extName)
+	public function __construct($folder, $extName, $type = "components")
 	{
 		parent::__construct();
 
 		$this->source = $this->getSourceFolder() . "/" . $folder;
 		$this->extName = $extName;
 
-		$this->type = substr($extName, 0, 3);
-
-		$target = $this->getBuildFolder() . "/" . $folder;
-
-		if ($this->type == 'mod')
-		{
-			$target = $this->getBuildFolder() . "/modules/" . $extName . "/" . $folder;
-		}
-		elseif ($this->type == 'plg')
-		{
-			$a = explode("_", $this->extName);
-
-			$target = $this->getBuildFolder() . "/plugins/" . $a[1] . "/" . $a[2] . "/" . $folder;
-		}
-		elseif ($this->type == 'lib')
-		{
-			// Remove lib before - ugly hack
-			$ex = str_replace("lib_", "", $this->extName);
-
-			$target = $this->getBuildFolder() . "/libraries/" . $ex . "/" . $folder;
-		}
-
-		$this->target = $target;
+		$this->target = $this->getBuildFolder() . "/" . $type . "/" . $extName . "/" . $folder;
 	}
 
 	/**

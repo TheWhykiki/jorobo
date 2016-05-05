@@ -69,9 +69,9 @@ class Package extends Base implements TaskInterface
 
 		// Copy XML and script.php
 		$sourceFolder = $this->getSourceFolder() . "/administrator/manifests/packages";
-		$targetFolder = $this->getBuildFolder() . "/administrator/manifests/packages";
+		$targetFolder = $this->getBuildFolder() . "/pkg_" . $this->getExtensionName();
 		$xmlFile     = $targetFolder . "/pkg_" . $this->getExtensionName() . ".xml";
-		$scriptFile  = $targetFolder . "/" . $this->getExtensionName() . "/script.php";
+		$scriptFile  = $targetFolder . "/script.php";
 
 		$this->_copy($sourceFolder . "/pkg_" . $this->getExtensionName() . ".xml", $xmlFile);
 
