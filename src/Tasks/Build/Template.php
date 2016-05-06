@@ -48,7 +48,7 @@ class Template extends Base implements TaskInterface
 		$this->templateName = $templateName;
 
 		$this->source = $this->getSourceFolder() . "/templates/" . $templateName;
-		$this->target = $this->getBuildFolder() . "/templates/" . $templateName;
+		$this->target = $this->getBuildFolder() . "/templates/tpl_" . $templateName;
 	}
 
 	/**
@@ -66,7 +66,7 @@ class Template extends Base implements TaskInterface
 		$files = $this->copyTarget($this->source, $this->target);
 
 		// Build media (relative path)
-		$media = $this->buildMedia("media/" . $this->templateName, $this->templateName);
+		$media = $this->buildMedia("media/tpl_" . $this->templateName, "tpl_" . $this->templateName, "templates");
 		$media->run();
 
 		$this->addFiles('media', $media->getResultFiles());

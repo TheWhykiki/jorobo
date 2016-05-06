@@ -175,27 +175,25 @@ class Base extends JTask implements TaskInterface
 
 		while ($entry = readdir($hdl))
 		{
+			// Ignore hidden files
+			if (substr($entry, 0, 1) == '.'
+				|| (isset($this->getConfig()->exclude)
+					&& in_array($entry, explode(',', $this->getConfig()->exclude))))
+			{
+				continue;
+			}
+
 			$p = $path . "/" . $entry;
 
-			// Ignore hidden files
-			if (substr($entry, 0, 1) != '.')
+			if (is_file($p))
 			{
-				if (isset($this->getConfig()->exclude)
-					&& in_array($entry, explode(',', $this->getConfig()->exclude)))
-				{
-					continue;
-				}
-
-				if (is_file($p))
-				{
-					$map[] = array("file" => $entry);
-					$this->_copy($p, $tar . "/" . $entry);
-				}
-				else
-				{
-					$map[] = array("folder" => $entry);
-					$this->_copyDir($p, $tar . "/" . $entry);
-				}
+				$map[] = array("file" => $entry);
+				$this->_copy($p, $tar . "/" . $entry);
+			}
+			else
+			{
+				$map[] = array("folder" => $entry);
+				$this->_copyDir($p, $tar . "/" . $entry);
 			}
 		}
 
@@ -239,11 +237,13 @@ class Base extends JTask implements TaskInterface
 	/**
 	 * Generate a list of files
 	 *
-	 * @param   array  $files  Files and Folders array
+	 * @param   array   $files    Files and Folders array
+	 * @param   string  $ext      Extension Name
+	 * @param   string  $extType  Extension Type
 	 *
 	 * @return  string
 	 */
-	public function generateFileList($files)
+	public function generateFileList($files, $ext = "", $extType = "")
 	{
 		if (!count($files))
 		{
@@ -256,7 +256,14 @@ class Base extends JTask implements TaskInterface
 		{
 			foreach ($f as $type => $value)
 			{
-				$text[] = "<" . $type . ">" . $value . "</" . $type . ">";
+				$p = "";
+
+				if ($value == $ext . ".php")
+				{
+					$p = ' ' . $extType . '="' . $ext . '"';
+				}
+
+				$text[] = "<" . $type . $p . ">" . $value . "</" . $type . ">";
 			}
 		}
 
@@ -305,7 +312,7 @@ class Base extends JTask implements TaskInterface
 		{
 			return "";
 		}
-
+/*
 		$text = array();
 
 		foreach ($files as $f)
@@ -325,6 +332,8 @@ class Base extends JTask implements TaskInterface
 		}
 
 		return implode("\n", $text);
+*/
+		return $this->generateFileList($files, $plugin, "plugin");
 	}
 
 	/**
@@ -341,7 +350,7 @@ class Base extends JTask implements TaskInterface
 		{
 			return "";
 		}
-
+/*
 		$text = array();
 
 		foreach ($files as $f)
@@ -361,6 +370,8 @@ class Base extends JTask implements TaskInterface
 		}
 
 		return implode("\n", $text);
+*/
+		return $this->generateFileList($files, $module, "module");
 	}
 
 	/**

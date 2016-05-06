@@ -8,12 +8,8 @@
 
 namespace Joomla\Jorobo\Tasks\Deploy;
 
-use Robo\Result;
-use Robo\Task\BaseTask;
-use Robo\Contract\TaskInterface;
-use Robo\Exception\TaskException;
-
 use Joomla\Jorobo\Tasks\JTask;
+use Robo\Contract\TaskInterface;
 
 /**
  * Deploy project as Package file
@@ -29,6 +25,8 @@ class Package extends Base implements TaskInterface
 	 * @var    string
 	 */
 	protected $target = null;
+
+	protected $packageFiles = array();
 
 	private $hasComponent = true;
 
@@ -49,7 +47,7 @@ class Package extends Base implements TaskInterface
 	{
 		parent::__construct();
 
-		$this->target = JPATH_BASE . "/dist/pkg-" . $this->getExtensionName() . "-" . $this->getConfig()->version . ".zip";
+		$this->target  = JPATH_BASE . "/dist/pkg_" . $this->getExtensionName() . "-" . $this->getConfig()->version . ".zip";
 		$this->current = JPATH_BASE . "/dist/current";
 	}
 
@@ -80,22 +78,22 @@ class Package extends Base implements TaskInterface
 
 		if ($this->hasModules)
 		{
-			$this->createModuleZips();
+			$this->createExtensionZips("module");
 		}
 
 		if ($this->hasPlugins)
 		{
-			$this->createPluginZips();
+			$this->createExtensionZips("plugin");
 		}
 
 		if ($this->hasTemplates)
 		{
-			$this->createTemplateZips();
+			$this->createExtensionZips("template");
 		}
 
 		$this->createPackageZip();
 
-		$this->_symlink($this->target, JPATH_BASE . "/dist/pkg-" . $this->getExtensionName() . "-current.zip");
+		//$this->_symlink($this->target, JPATH_BASE . "/dist/pkg-" . $this->getExtensionName() . "-current.zip");
 
 		return true;
 	}
@@ -108,45 +106,81 @@ class Package extends Base implements TaskInterface
 	private function analyze()
 	{
 		// Check if we have component, module, plugin etc.
-		if (!file_exists($this->current . "/administrator/components/com_" . $this->getExtensionName())
-				&& !file_exists($this->current . "/components/com_" . $this->getExtensionName())
+		if (!file_exists($this->getBuildFolder() . "/administrator/components/com_" . $this->getExtensionName())
+			&& !file_exists($this->getBuildFolder() . "/components/com_" . $this->getExtensionName())
 		)
 		{
 			$this->say("Extension has no component");
 			$this->hasComponent = false;
 		}
 
-		if (!file_exists($this->current . "/modules"))
+		if (!file_exists($this->getBuildFolder() . "/module"))
 		{
 			$this->hasModules = false;
 		}
 
-		if (!file_exists($this->current . "/plugins"))
+		if (!file_exists($this->getBuildFolder() . "/plugin"))
 		{
 			$this->hasPlugins = false;
 		}
 
-		if (!file_exists($this->current . "/templates"))
+		if (!file_exists($this->getBuildFolder() . "/template"))
 		{
 			$this->hasTemplates = false;
 		}
 
-		if (!file_exists($this->current . "/libraries"))
+		if (!file_exists($this->getBuildFolder() . "/library"))
 		{
 			$this->hasLibraries = false;
 		}
 
-		if (!file_exists($this->current . "/components/com_comprofiler"))
+		if (!file_exists($this->getBuildFolder() . "/components/com_comprofiler"))
 		{
 			$this->hasCBPlugins = false;
 		}
 	}
 
 	/**
+	 * Create a installable zip file for a component
+	 *
+	 * @TODO implement possibility for multiple components (without duplicate content)
+	 *
+	 * @return  void
+	 */
+	public function createComponentZip()
+	{
+		$comZip = new \ZipArchive(JPATH_BASE . "/dist", \ZipArchive::CREATE);
+
+		if (file_exists(JPATH_BASE . '/dist/tmp/cbuild'))
+		{
+			$this->_deleteDir(JPATH_BASE . '/dist/tmp/cbuild');
+		}
+
+		// Improve, should been a whitelist instead of a hardcoded copy
+		$this->_mkdir(JPATH_BASE . '/dist/tmp/cbuild');
+
+		$this->_copyDir($this->current . '/administrator', JPATH_BASE . '/dist/tmp/cbuild/administrator');
+		$this->_remove(JPATH_BASE . '/dist/tmp/cbuild/administrator/manifests');
+		$this->_copyDir($this->current . '/language', JPATH_BASE . '/dist/tmp/cbuild/language');
+		$this->_copyDir($this->current . '/components', JPATH_BASE . '/dist/tmp/cbuild/components');
+
+		$comZip->open(JPATH_BASE . '/dist/zips/com_' . $this->getExtensionName() . '.zip', \ZipArchive::CREATE);
+
+		// Process the files to zip
+		$this->addFiles($comZip, JPATH_BASE . '/dist/tmp/cbuild');
+
+		$comZip->addFile($this->current . "/" . $this->getExtensionName() . ".xml", $this->getExtensionName() . ".xml");
+		$comZip->addFile($this->current . "/administrator/components/com_" . $this->getExtensionName() . "/script.php", "script.php");
+
+		// Close the zip archive
+		$comZip->close();
+	}
+
+	/**
 	 * Add files
 	 *
-	 * @param    \ZipArchive  $zip        The zip object
-	 * @param    string       $path       Optional path
+	 * @param    \ZipArchive $zip  The zip object
+	 * @param    string      $path Optional path
 	 *
 	 * @return  void
 	 */
@@ -162,7 +196,7 @@ class Package extends Base implements TaskInterface
 		if (is_dir($source) === true)
 		{
 			$files = new \RecursiveIteratorIterator(
-					new \RecursiveDirectoryIterator($source), \RecursiveIteratorIterator::SELF_FIRST
+				new \RecursiveDirectoryIterator($source), \RecursiveIteratorIterator::SELF_FIRST
 			);
 
 			foreach ($files as $file)
@@ -199,194 +233,57 @@ class Package extends Base implements TaskInterface
 	}
 
 	/**
-	 * Create a installable zip file for a component
+	 * Create zips for Extensions
 	 *
-	 * @TODO implement possibility for multiple components (without duplicate content)
-	 *
+	 * @param   string  $type  Extension Type
 	 * @return  void
 	 */
-	public function createComponentZip()
+	public function createExtensionZips($type)
 	{
-		$comZip = new \ZipArchive(JPATH_BASE . "/dist", \ZipArchive::CREATE);
+		$path = $this->getBuildFolder() . "/" . $type;
 
-		if (file_exists(JPATH_BASE . '/dist/tmp/cbuild'))
-		{
-			$this->_deleteDir(JPATH_BASE . '/dist/tmp/cbuild');
-		}
-
-		// Improve, should been a whitelist instead of a hardcoded copy
-		$this->_mkdir(JPATH_BASE . '/dist/tmp/cbuild');
-
-		$this->_copyDir($this->current . '/administrator', JPATH_BASE . '/dist/tmp/cbuild/administrator');
-		$this->_remove(JPATH_BASE . '/dist/tmp/cbuild/administrator/manifests');
-		$this->_copyDir($this->current . '/language', JPATH_BASE . '/dist/tmp/cbuild/language');
-		$this->_copyDir($this->current . '/components', JPATH_BASE . '/dist/tmp/cbuild/components');
-		
-		// Check for media folder if exist then copy
-		if (file_exists($this->current . '/media'))
-		{
-			$this->_copyDir($this->current . '/media', JPATH_BASE . '/dist/tmp/cbuild/media');
-		}
-		
-		$comZip->open(JPATH_BASE . '/dist/zips/com_' . $this->getExtensionName() . '.zip', \ZipArchive::CREATE);
-
-		// Process the files to zip
-		$this->addFiles($comZip, JPATH_BASE . '/dist/tmp/cbuild');
-
-		$comZip->addFile($this->current . "/" . $this->getExtensionName() . ".xml", $this->getExtensionName() . ".xml");
-		$comZip->addFile($this->current . "/administrator/components/com_" . $this->getExtensionName() . "/script.php", "script.php");
-
-		// Close the zip archive
-		$comZip->close();
-	}
-
-	/**
-	 * Create zips for modules
-	 *
-	 * @return  void
-	 */
-	public function createModuleZips()
-	{
-		$path = $this->current . "/modules";
-
-		// Get every module
+		// Get every Extension
 		$hdl = opendir($path);
 
 		while ($entry = readdir($hdl))
 		{
-			// Only folders
-			$p = $path . "/" . $entry;
-
 			if (substr($entry, 0, 1) == '.')
 			{
 				continue;
 			}
 
+			// Only folders
+			$p = $path . "/" . $entry;
+
 			if (!is_file($p))
 			{
-				$this->say("Packaging Module " . $entry);
+				// Extension name folder
+				$ext = $entry;
+
+				$this->_symlink($p, $this->current);
+
+				$this->say("Packaging " . ucfirst($type) . " " . $ext);
 
 				// Package file
-				$zip = new \ZipArchive(JPATH_BASE . "/dist", \ZipArchive::CREATE);
+				$zip = new Zip(JPATH_BASE . '/dist/zips/' . $ext . '.zip');
+				$zip->run();
 
-				$zip->open(JPATH_BASE . '/dist/zips/' . $entry . '.zip', \ZipArchive::CREATE);
+				$a = explode("_", $ext);
 
-				$this->say("Module " . $p);
-
-				// Process the files to zip
-				$this->addFiles($zip, $p);
-
-				// Close the zip archive
-				$zip->close();
-			}
-		}
-
-		closedir($hdl);
-	}
-
-	/**
-	 * Create zips for plugins
-	 *
-	 * @return  void
-	 */
-	public function createPluginZips()
-	{
-		$path = $this->current . "/plugins";
-
-		// Get every plugin
-		$hdl = opendir($path);
-
-		while ($entry = readdir($hdl))
-		{
-			// Only folders
-			$p = $path . "/" . $entry;
-
-			if (substr($entry, 0, 1) == '.')
-			{
-				continue;
-			}
-
-			if (!is_file($p))
-			{
-				// Plugin type folder
-				$type = $entry;
-
-				$hdl2 = opendir($p);
-
-				while ($plugin = readdir($hdl2))
+				switch ($a[0])
 				{
-					if (substr($plugin, 0, 1) == '.')
-					{
-						continue;
-					}
+					case 'plg':
+						$this->packageFiles[$ext] = array('type' => $type, 'id' => $a[2], 'group' => $a[1]);
+						break;
 
-					// Only folders
-					$p2 = $path . "/" . $type . "/" . $plugin;
+					case 'mod' || 'tpl':
+						$this->packageFiles[$ext] = array('type' => $type, 'id' => $a[1], 'client' => 'site');
+						break;
 
-					if (!is_file($p2))
-					{
-						$plg = "plg_" . $type . "_" . $plugin;
-
-						$this->say("Packaging Plugin " . $plg);
-
-						// Package file
-						$zip = new \ZipArchive(JPATH_BASE . "/dist", \ZipArchive::CREATE);
-
-						$zip->open(JPATH_BASE . '/dist/zips/' . $plg . '.zip', \ZipArchive::CREATE);
-
-						// Process the files to zip
-						$this->addFiles($zip, $p2);
-
-						// Close the zip archive
-						$zip->close();
-					}
+					default:
+						$this->packageFiles[$ext] = array('type' => $type, 'id' => $a[1]);
+						break;
 				}
-
-				closedir($hdl2);
-			}
-		}
-
-		closedir($hdl);
-	}
-
-	/**
-	 * Create zips for templates
-	 *
-	 * @return  void
-	 */
-	public function createTemplateZips()
-	{
-		$path = $this->current . "/templates";
-
-		// Get every module
-		$hdl = opendir($path);
-
-		while ($entry = readdir($hdl))
-		{
-			// Only folders
-			$p = $path . "/" . $entry;
-
-			if (substr($entry, 0, 1) == '.')
-			{
-				continue;
-			}
-
-			if (!is_file($p))
-			{
-				$this->say("Packaging Template " . $entry);
-
-				// Package file
-				$zip = new \ZipArchive(JPATH_BASE . "/dist", \ZipArchive::CREATE);
-
-				$zip->open(JPATH_BASE . '/dist/zips/tpl_' . $entry . '.zip', \ZipArchive::CREATE);
-
-				$this->say("Template " . $p);
-
-				// Process the files to zip
-				$this->addFiles($zip, $p);
-
-				// Close the zip archive
-				$zip->close();
 			}
 		}
 
@@ -400,28 +297,43 @@ class Package extends Base implements TaskInterface
 	 */
 	public function createPackageZip()
 	{
-		$zip = new \ZipArchive($this->target, \ZipArchive::CREATE);
+		$path = $this->getBuildFolder() . "/pkg_" . $this->getExtensionName();
+		$pSource = JPATH_BASE . '/dist/zips';
+		$pTarget = $path . "/packages";
 
-		// Instantiate the zip archive
-		$zip->open($this->target, \ZipArchive::CREATE);
+		$this->_copyDir($pSource, $pTarget);
+		$this->_deleteDir($pSource);
 
-		// Process the files to zip
-		$this->addFiles($zip, JPATH_BASE . '/dist/zips/');
+		$fileList = array();
 
-		$zip->addFile($this->current . "/administrator/manifests/packages/pkg_" . $this->getExtensionName() . ".xml", "pkg_" . $this->getExtensionName() . ".xml");
-
-		// If the package has language files, add those
-		if (is_file($this->current . "/administrator/manifests/packages/pkg_" . $this->getExtensionName() . "/language/en-GB/en-GB.pkg_" . $this->getExtensionName() . ".ini"))
+		foreach ($this->packageFiles as $file => $attr)
 		{
-			$zip->addFile($this->current . "/administrator/manifests/packages/pkg_" . $this->getExtensionName() . "/language/en-GB/en-GB.pkg_" . $this->getExtensionName() . ".ini", "language/en-GB/en-GB.pkg_" . $this->getExtensionName() . ".ini");
+			$attribute = array();
+
+			foreach ($attr as $key => $value)
+			{
+				$attribute[] = $key . '="' . $value . '"';
+			}
+
+			$attributes = implode(' ', $attribute);
+
+			$fileList[] = '<file ' . $attributes . '>' . $file . '.zip</file>';
 		}
 
-		if (is_file($this->current . "/administrator/manifests/packages/pkg_" . $this->getExtensionName() . "/language/en-GB/en-GB.pkg_" . $this->getExtensionName() . ".sys.ini"))
-		{
-			$zip->addFile($this->current . "/administrator/manifests/packages/pkg_" . $this->getExtensionName() . "/language/en-GB/en-GB.pkg_" . $this->getExtensionName() . ".sys.ini", "language/en-GB/en-GB.pkg_" . $this->getExtensionName() . ".sys.ini");
-		}
+		$f = implode("\n", $fileList);
+		$xmlFile = $path . "/pkg_" . $this->getExtensionName() . ".xml";
 
-		// Close the zip archive
-		$zip->close();
+		$this->taskReplaceInFile($xmlFile)
+			->from('##FILES##')
+			->to($f)
+			->run();
+
+		$this->_symlink($path, $this->current);
+
+		$this->say("Packaging Package " . $this->getExtensionName());
+
+		// Package file
+		$zip = new Zip($this->target);
+		$zip->run();
 	}
 }
