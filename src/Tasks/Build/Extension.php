@@ -8,12 +8,8 @@
 
 namespace Joomla\Jorobo\Tasks\Build;
 
-use Robo\Result;
-use Robo\Task\BaseTask;
-use Robo\Contract\TaskInterface;
-use Robo\Exception\TaskException;
-
 use Joomla\Jorobo\Tasks\JTask;
+use Robo\Contract\TaskInterface;
 
 /**
  * The supervisor
@@ -63,7 +59,7 @@ class Extension extends Base implements TaskInterface
 	/**
 	 * Initialize Build Task
 	 *
-	 * @param   String  $params  The target directory
+	 * @param   String $params The target directory
 	 */
 	public function __construct($params)
 	{
@@ -97,13 +93,14 @@ class Extension extends Base implements TaskInterface
 
 			while ($entry = readdir($hdl))
 			{
-				// Only folders
-				$p = $path . "/" . $entry;
-
+				// Ignore hidden files
 				if (substr($entry, 0, 1) == '.')
 				{
 					continue;
 				}
+
+				// Only folders
+				$p = $path . "/" . $entry;
 
 				if (!is_file($p))
 				{
@@ -126,13 +123,14 @@ class Extension extends Base implements TaskInterface
 
 			while ($entry = readdir($hdl))
 			{
-				// Only folders
-				$p = $path . "/" . $entry;
-
+				// Ignore hidden files
 				if (substr($entry, 0, 1) == '.')
 				{
 					continue;
 				}
+
+				// Only folders
+				$p = $path . "/" . $entry;
 
 				if (!is_file($p))
 				{
@@ -143,13 +141,14 @@ class Extension extends Base implements TaskInterface
 
 					while ($plugin = readdir($hdl2))
 					{
-						// Only folders
-						$p2 = $path . "/" . $entry;
-
+						// Ignore hidden files
 						if (substr($plugin, 0, 1) == '.')
 						{
 							continue;
 						}
+
+						// Only folders
+						$p2 = $p . "/" . $plugin;
 
 						if (!is_file($p2))
 						{
@@ -174,13 +173,14 @@ class Extension extends Base implements TaskInterface
 
 			while ($entry = readdir($hdl))
 			{
-				// Only folders
-				$p = $path . "/" . $entry;
-
+				// Ignore hidden files
 				if (substr($entry, 0, 1) == '.')
 				{
 					continue;
 				}
+
+				// Only folders
+				$p = $path . "/" . $entry;
 
 				if (!is_file($p))
 				{
@@ -202,13 +202,14 @@ class Extension extends Base implements TaskInterface
 
 			while ($entry = readdir($hdl))
 			{
-				// Only folders
-				$p = $path . "/" . $entry;
-
+				// Ignore hidden files
 				if (substr($entry, 0, 1) == '.')
 				{
 					continue;
 				}
+
+				// Only folders
+				$p = $path . "/" . $entry;
 
 				if (!is_file($p))
 				{
@@ -219,13 +220,14 @@ class Extension extends Base implements TaskInterface
 
 					while ($plugin = readdir($hdl2))
 					{
-						// Only folders
-						$p2 = $path . "/" . $entry;
-
+						// Ignore hidden files
 						if (substr($plugin, 0, 1) == '.')
 						{
 							continue;
 						}
+
+						// Only folders
+						$p2 = $path . "/" . $entry;
 
 						if (!is_file($p2))
 						{
@@ -251,13 +253,14 @@ class Extension extends Base implements TaskInterface
 
 			while ($entry = readdir($hdl))
 			{
-				// Only folders
-				$p = $path . "/" . $entry;
-
+				// Ignore hidden files
 				if (substr($entry, 0, 1) == '.')
 				{
 					continue;
 				}
+
+				// Only folders
+				$p = $path . "/" . $entry;
 
 				if (!is_file($p))
 				{
@@ -288,7 +291,8 @@ class Extension extends Base implements TaskInterface
 	{
 		// Check if we have component, module, plugin etc.
 		if (!file_exists($this->getSourceFolder() . "/administrator/components/com_" . $this->getExtensionName())
-			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName()))
+			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName())
+		)
 		{
 			$this->say("Extension has no component");
 			$this->hasComponent = false;
