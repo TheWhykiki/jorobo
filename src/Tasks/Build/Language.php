@@ -83,13 +83,13 @@ class Language extends Base implements TaskInterface
 
 		if ($this->type == "mod")
 		{
-			$target .= "/module/" . $this->ext;
+			$target .= "/modules/" . $this->ext;
 		}
 		elseif ($this->type == "plg")
 		{
 			//$a = explode("_", $this->ext);
 
-			$target .= "/plugin/" . $this->ext;
+			$target .= "/plugins/" . $this->ext;
 		}
 		elseif ($this->type == "pkg")
 		{
@@ -97,7 +97,7 @@ class Language extends Base implements TaskInterface
 		}
 		elseif ($this->type == "lib")
 		{
-			$target .= "/library/" . $this->ext;
+			$target .= "/libraries/" . $this->ext;
 		}
 		elseif ($this->type == "plu")
 		{
@@ -115,18 +115,32 @@ class Language extends Base implements TaskInterface
 		}
 		elseif ($this->type == "tpl")
 		{
-			$target .= "/template/" . $this->ext;
+			$target .= "/templates/" . $this->ext;
 		}
 
 		if ($this->hasAdminLang)
 		{
-			$map = $this->copyLanguage("language", $target);
+			$comTarget = '';
+
+			if ($this->type == "com")
+			{
+				$comTarget = "/components/" . $this->ext . "/administrator";
+			}
+
+
+			$map = $this->copyLanguage("administrator/language", $target . $comTarget);
 			$this->addFiles('backendLanguage', $map);
 		}
-
 		if ($this->hasFrontLang)
 		{
-			$map = $this->copyLanguage("language", $target);
+			$comTarget = '';
+
+			if ($this->type == "com")
+			{
+				$comTarget = "/components/" . $this->ext;
+			}
+
+			$map = $this->copyLanguage("language", $target . $comTarget);
 			$this->addFiles('frontendLanguage', $map);
 		}
 
@@ -161,22 +175,28 @@ class Language extends Base implements TaskInterface
 	{
 		if ($this->type == "com")
 		{
-			if ($this->hasAdminLang || $this->hasFrontLang)
+			if ($this->hasAdminLang)
 			{
-				$this->_mkdir($this->getBuildFolder() . "/language");
+				$this->_mkdir($this->getBuildFolder()
+					. "/components/" . $this->ext . "/administrator/language");
+			}
+
+			if ($this->hasFrontLang)
+			{
+				$this->_mkdir($this->getBuildFolder() . "/components/" . $this->ext . "/language");
 			}
 		}
 
 		if ($this->type == "mod")
 		{
-			$this->_mkdir($this->getBuildFolder() . "/module/" . $this->ext . "/language");
+			$this->_mkdir($this->getBuildFolder() . "/modules/" . $this->ext . "/language");
 		}
 
 		if ($this->type == "plg")
 		{
 			//$a = explode("_", $this->ext);
 
-			$this->_mkdir($this->getBuildFolder() . "/plugin/" . $this->ext . "/language");
+			$this->_mkdir($this->getBuildFolder() . "/plugins/" . $this->ext . "/language");
 		}
 
 		if ($this->type == "plug")
@@ -192,22 +212,15 @@ class Language extends Base implements TaskInterface
 	/**
 	 * Copy language files
 	 *
-	 * @param   string  $dir     The directory (administrator/language or language or mod_xy/language etc)
+	 * @param   string  $source  The source directory (administrator/language or language or mod_xy/language etc)
 	 * @param   String  $target  The target directory
 	 *
 	 * @return   array
 	 */
-	public function copyLanguage($dir, $target)
+	public function copyLanguage($source, $target)
 	{
 		// Equals administrator/language or language
-		if ($this->hasAdminLang)
-		{
-			$path = $this->getSourceFolder() . "/administrator/" . $dir;
-		}
-		elseif ($this->hasFrontLang)
-		{
-			$path = $this->getSourceFolder() . "/" . $dir;
-		}
+		$path = $this->getSourceFolder() . "/" . $source;
 
 		$files = array();
 
@@ -228,7 +241,7 @@ class Language extends Base implements TaskInterface
 			if (!is_file($p))
 			{
 				// Make folder at destination
-				$this->_mkdir($target . "/" . $dir . "/" . $entry);
+				$this->_mkdir($target . "/language/" . $entry);
 
 				$fileHdl = opendir($p);
 
@@ -240,7 +253,7 @@ class Language extends Base implements TaskInterface
 						$files[] = array($entry => $file);
 
 						// Copy file
-						$this->_copy($p . "/" . $file, $target . "/" . $dir . "/" . $entry . "/" . $file);
+						$this->_copy($p . "/" . $file, $target . "/language/" . $entry . "/" . $file);
 					}
 				}
 

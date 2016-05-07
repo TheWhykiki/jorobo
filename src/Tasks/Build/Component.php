@@ -8,12 +8,11 @@
 
 namespace Joomla\Jorobo\Tasks\Build;
 
-use Robo\Result;
-use Robo\Task\BaseTask;
+use Joomla\Jorobo\Tasks\JTask;
 use Robo\Contract\TaskInterface;
 use Robo\Exception\TaskException;
-
-use Joomla\Jorobo\Tasks\JTask;
+use Robo\Result;
+use Robo\Task\BaseTask;
 
 /**
  * Class Component
@@ -39,7 +38,7 @@ class Component extends Base implements TaskInterface
 	/**
 	 * Initialize Build Task
 	 *
-	 * @param   String  $params  The target directory
+	 * @param   String $params The target directory
 	 */
 	public function __construct($params)
 	{
@@ -67,16 +66,20 @@ class Component extends Base implements TaskInterface
 		// Prepare directories
 		$this->prepareDirectories();
 
+		$extBuildFolder = $this->getBuildFolder() . "/components/com_" . $this->getExtensionName();
+
 		if ($this->hasAdmin)
 		{
-			$adminFiles = $this->copyTarget($this->adminPath, $this->getBuildFolder() . "/administrator/components/com_" . $this->getExtensionName());
+			$adminFiles = $this->copyTarget($this->adminPath
+				, $extBuildFolder . "/administrator/components/com_" . $this->getExtensionName());
 
 			$this->addFiles('backend', $adminFiles);
 		}
 
 		if ($this->hasFront)
 		{
-			$frontendFiles = $this->copyTarget($this->frontPath, $this->getBuildFolder() . "/components/com_" . $this->getExtensionName());
+			$frontendFiles = $this->copyTarget($this->frontPath
+				, $extBuildFolder . "/components/com_" . $this->getExtensionName());
 
 			$this->addFiles('frontend', $frontendFiles);
 		}
@@ -101,22 +104,21 @@ class Component extends Base implements TaskInterface
 		$this->createInstaller();
 
 		// Copy XML and script.php to root
-		$adminFolder = $this->getBuildFolder() . "/administrator/components/com_" . $this->getExtensionName();
+		$adminFolder = $extBuildFolder . "/administrator/components/com_" . $this->getExtensionName();
 		$xmlFile     = $adminFolder . "/" . $this->getExtensionName() . ".xml";
 		$scriptFile  = $adminFolder . "/script.php";
 
-		$this->_copy($xmlFile, $this->getBuildFolder() . "/" . $this->getExtensionName() . ".xml");
-		$this->_copy($scriptFile, $this->getBuildFolder() . "/script.php");
+		$this->_copy($xmlFile, $extBuildFolder . "/" . $this->getExtensionName() . ".xml");
 
 		if (file_exists($scriptFile))
 		{
-			$this->_copy($scriptFile, $this->getBuildFolder() . "/script.php");
+			$this->_copy($scriptFile, $extBuildFolder . "/script.php");
 		}
 
 		// Copy Readme
 		if (JPATH_BASE . "/docs/README.md")
 		{
-			$this->_copy(JPATH_BASE . "/docs/README.md", $this->getBuildFolder() . "/README");
+			$this->_copy(JPATH_BASE . "/docs/README.md", $extBuildFolder . "/README");
 		}
 
 		return true;
@@ -152,14 +154,16 @@ class Component extends Base implements TaskInterface
 	 */
 	private function prepareDirectories()
 	{
+		$extBuildFolder = $this->getBuildFolder() . "/components/com_" . $this->getExtensionName();
+
 		if ($this->hasAdmin)
 		{
-			$this->_mkdir($this->getBuildFolder() . "/administrator/components/com_" . $this->getExtensionName());
+			$this->_mkdir($extBuildFolder . "/administrator/components/com_" . $this->getExtensionName());
 		}
 
 		if ($this->hasFront)
 		{
-			$this->_mkdir($this->getBuildFolder() . "/components/com_" . $this->getExtensionName());
+			$this->_mkdir($extBuildFolder . "/components/com_" . $this->getExtensionName());
 		}
 	}
 
@@ -172,11 +176,12 @@ class Component extends Base implements TaskInterface
 	{
 		$this->say("Creating component installer");
 
-		$adminFolder = $this->getBuildFolder() . "/administrator/components/com_" . $this->getExtensionName();
-		$xmlFile     = $adminFolder . "/" . $this->getExtensionName() . ".xml";
-        $configFile  = $adminFolder . "/config.xml";
-		$scriptFile  = $adminFolder . "/script.php";
-		$helperFile  = $adminFolder . "/helpers/defines.php";
+		$extBuildFolder = $this->getBuildFolder() . "/components/com_" . $this->getExtensionName();
+		$adminFolder    = $extBuildFolder . "/administrator/components/com_" . $this->getExtensionName();
+		$xmlFile        = $adminFolder . "/" . $this->getExtensionName() . ".xml";
+		$configFile     = $adminFolder . "/config.xml";
+		$scriptFile     = $adminFolder . "/script.php";
+		$helperFile     = $adminFolder . "/helpers/defines.php";
 
 		// Version & Date Replace
 		$this->replaceInFile($xmlFile);

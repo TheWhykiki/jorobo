@@ -73,27 +73,27 @@ class Package extends Base implements TaskInterface
 
 		if ($this->hasComponent)
 		{
-			$this->createComponentZip();
+			$this->createExtensionZips("components");
 		}
 
 		if ($this->hasModules)
 		{
-			$this->createExtensionZips("module");
+			$this->createExtensionZips("modules");
 		}
 
 		if ($this->hasPlugins)
 		{
-			$this->createExtensionZips("plugin");
+			$this->createExtensionZips("plugins");
 		}
 
 		if ($this->hasTemplates)
 		{
-			$this->createExtensionZips("template");
+			$this->createExtensionZips("templates");
 		}
 
 		$this->createPackageZip();
 
-		//$this->_symlink($this->target, JPATH_BASE . "/dist/pkg-" . $this->getExtensionName() . "-current.zip");
+		$this->_symlink($this->target, JPATH_BASE . "/dist/pkg-" . $this->getExtensionName() . "-current.zip");
 
 		return true;
 	}
@@ -114,22 +114,22 @@ class Package extends Base implements TaskInterface
 			$this->hasComponent = false;
 		}
 
-		if (!file_exists($this->getBuildFolder() . "/module"))
+		if (!file_exists($this->getBuildFolder() . "/modules"))
 		{
 			$this->hasModules = false;
 		}
 
-		if (!file_exists($this->getBuildFolder() . "/plugin"))
+		if (!file_exists($this->getBuildFolder() . "/plugins"))
 		{
 			$this->hasPlugins = false;
 		}
 
-		if (!file_exists($this->getBuildFolder() . "/template"))
+		if (!file_exists($this->getBuildFolder() . "/templates"))
 		{
 			$this->hasTemplates = false;
 		}
 
-		if (!file_exists($this->getBuildFolder() . "/library"))
+		if (!file_exists($this->getBuildFolder() . "/libraries"))
 		{
 			$this->hasLibraries = false;
 		}
@@ -137,98 +137,6 @@ class Package extends Base implements TaskInterface
 		if (!file_exists($this->getBuildFolder() . "/components/com_comprofiler"))
 		{
 			$this->hasCBPlugins = false;
-		}
-	}
-
-	/**
-	 * Create a installable zip file for a component
-	 *
-	 * @TODO implement possibility for multiple components (without duplicate content)
-	 *
-	 * @return  void
-	 */
-	public function createComponentZip()
-	{
-		$comZip = new \ZipArchive(JPATH_BASE . "/dist", \ZipArchive::CREATE);
-
-		if (file_exists(JPATH_BASE . '/dist/tmp/cbuild'))
-		{
-			$this->_deleteDir(JPATH_BASE . '/dist/tmp/cbuild');
-		}
-
-		// Improve, should been a whitelist instead of a hardcoded copy
-		$this->_mkdir(JPATH_BASE . '/dist/tmp/cbuild');
-
-		$this->_copyDir($this->current . '/administrator', JPATH_BASE . '/dist/tmp/cbuild/administrator');
-		$this->_remove(JPATH_BASE . '/dist/tmp/cbuild/administrator/manifests');
-		$this->_copyDir($this->current . '/language', JPATH_BASE . '/dist/tmp/cbuild/language');
-		$this->_copyDir($this->current . '/components', JPATH_BASE . '/dist/tmp/cbuild/components');
-
-		$comZip->open(JPATH_BASE . '/dist/zips/com_' . $this->getExtensionName() . '.zip', \ZipArchive::CREATE);
-
-		// Process the files to zip
-		$this->addFiles($comZip, JPATH_BASE . '/dist/tmp/cbuild');
-
-		$comZip->addFile($this->current . "/" . $this->getExtensionName() . ".xml", $this->getExtensionName() . ".xml");
-		$comZip->addFile($this->current . "/administrator/components/com_" . $this->getExtensionName() . "/script.php", "script.php");
-
-		// Close the zip archive
-		$comZip->close();
-	}
-
-	/**
-	 * Add files
-	 *
-	 * @param    \ZipArchive $zip  The zip object
-	 * @param    string      $path Optional path
-	 *
-	 * @return  void
-	 */
-	private function addFiles($zip, $path = null)
-	{
-		if (!$path)
-		{
-			$path = $this->current;
-		}
-
-		$source = str_replace('\\', '/', realpath($path));
-
-		if (is_dir($source) === true)
-		{
-			$files = new \RecursiveIteratorIterator(
-				new \RecursiveDirectoryIterator($source), \RecursiveIteratorIterator::SELF_FIRST
-			);
-
-			foreach ($files as $file)
-			{
-				$file = str_replace('\\', '/', $file);
-
-				if (substr($file, 0, 1) == ".")
-				{
-					continue;
-				}
-
-				// Ignore "." and ".." folders
-				if (in_array(substr($file, strrpos($file, '/') + 1), array('.', '..')))
-				{
-					continue;
-				}
-
-				$file = str_replace('\\', '/', $file);
-
-				if (is_dir($file) === true)
-				{
-					$zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-				}
-				else if (is_file($file) === true)
-				{
-					$zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-				}
-			}
-		}
-		else if (is_file($source) === true)
-		{
-			$zip->addFromString(basename($source), file_get_contents($source));
 		}
 	}
 
@@ -299,7 +207,7 @@ class Package extends Base implements TaskInterface
 	{
 		$path = $this->getBuildFolder() . "/pkg_" . $this->getExtensionName();
 		$pSource = JPATH_BASE . '/dist/zips';
-		$pTarget = $path . "/packages";
+		$pTarget = $path . "/";
 
 		$this->_copyDir($pSource, $pTarget);
 		$this->_deleteDir($pSource);
