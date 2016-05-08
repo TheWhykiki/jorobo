@@ -8,6 +8,8 @@
 
 namespace Joomla\Jorobo\Tasks\Deploy;
 
+use Joomla\Jorobo\Tasks\Build;
+use Joomla\Jorobo\Tasks\JTask;
 use Robo\Contract\TaskInterface;
 
 /**
@@ -17,31 +19,26 @@ class Zip extends Base implements TaskInterface
 {
 	use \Robo\Task\Development\loadTasks;
 	use \Robo\Common\TaskIO;
+	use Build\buildTasks;
+	use deployTasks;
 
 	protected $target = null;
 
-	private $zip = null;
+	protected $current = null;
 
-	/**
-	 * Initialize Build Task
-	 *
-	 * @param   string $target Target
-	 *
-	 * @return  void
-	 */
-	public function __construct($target = "")
-	{
-		parent::__construct();
+	protected $hasComponent = true;
 
-		$this->target = $target;
+	protected $hasModules = true;
 
-		if (empty($target))
-		{
-			$this->target = JPATH_BASE . "/dist/" . $this->getExtensionName() . "-" . $this->getConfig()->version . ".zip";
-		}
+	protected $hasPackage = true;
 
-		$this->zip = new \ZipArchive($this->target, \ZipArchive::CREATE);
-	}
+	protected $hasPlugins = true;
+
+	protected $hasLibraries = true;
+
+	protected $hasCBPlugins = true;
+
+	protected $hasTemplates = true;
 
 	/**
 	 * Build the package
@@ -50,45 +47,74 @@ class Zip extends Base implements TaskInterface
 	 */
 	public function run()
 	{
-		$this->say('Zipping ' . $this->getConfig()->extension . " " . $this->getConfig()->version);
-
-		// Instantiate the zip archive
-		$this->zip->open($this->target, \ZipArchive::CREATE);
-
-		//Current Extension Path
-		$current = JPATH_BASE . "/dist/current";
-
-		// Process the files to zip
-		foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($current), \RecursiveIteratorIterator::SELF_FIRST) as $subfolder)
+		if ($this->hasPackage)
 		{
-			if ($subfolder->isFile())
+			$this->deployPackage()->run();
+
+			return true;
+		}
+
+		$type      = '';
+		$params    = $this->getConfig()->params;
+		$extension = $this->getConfig()->extension;
+		$version   = $this->getConfig()->version;
+		$current   = JPATH_BASE . "/dist/" . $extension . "-" . $version;
+
+		$this->say('Creating Extension ' . $extension . " " . $version);
+
+		if ($this->hasComponent)
+		{
+			$ext = 'com';
+			$this->buildExtension($params)->run();
+		}
+		else
+		{
+			if ($this->hasModules)
 			{
-				// Set all separators to forward slashes for comparison
-				$usefolder = str_replace('\\', '/', $subfolder->getPath());
+				$ext = 'mod';
+				$this->buildModule($extension, $params)->run();
+			}
 
-				// Drop the folder part as we don't want them added to archive
-				$addpath = str_ireplace($current, '', $usefolder);
+			if ($this->hasPlugins)
+			{
+				$ext  = 'plg';
+				$path = $this->getSourceFolder() . "/plugins";
 
-				// Remove preceding slash
-				$findfirst = strpos($addpath, '/');
+				// Get every plugin type
+				$hdl = opendir($path);
 
-				if ($findfirst == 0 && $findfirst !== false)
+				while ($entry = readdir($hdl))
 				{
-					$addpath = substr($addpath, 1);
+					// Ignore hidden files
+					if (substr($entry, 0, 1) == '.')
+					{
+						continue;
+					}
+
+					if (!is_file($entry))
+					{
+						$type = '_' . $entry;
+						$this->buildPlugin($entry, $extension, $params)->run();
+					}
 				}
 
-				if (strlen($addpath) > 0 || empty($addpath))
-				{
-					$addpath .= '/';
-				}
+				closedir($hdl);
+			}
 
-				$options = array('add_path' => $addpath, 'remove_all_path' => true);
-				$this->zip->addGlob($usefolder . '/*.*', GLOB_BRACE, $options);
+			if ($this->hasTemplates)
+			{
+				$this->buildTemplate($extension, $params)->run();
 			}
 		}
 
-		// Close the zip archive
-		$this->zip->close();
+		$target = JPATH_BASE . "/dist/" . $ext . $type . "_" . $extension . "-" . $version . ".zip";
+
+		$this->_symlink($current, JPATH_BASE . "/dist/current");
+
+		// Package file
+		$this->createZip($target);
+
+		$this->_symlink($target, JPATH_BASE . "/dist/" . $ext . "-" . $this->getExtensionName() . "-current.zip");
 
 		return true;
 	}

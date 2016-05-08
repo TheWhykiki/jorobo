@@ -25,6 +25,8 @@ class Media extends Base implements TaskInterface
 	use \Robo\Task\Development\loadTasks;
 	use \Robo\Common\TaskIO;
 
+	public $type = null;
+
 	protected $source = null;
 
 	protected $target = null;
@@ -39,14 +41,14 @@ class Media extends Base implements TaskInterface
 	 * @param   String  $folder   The target directory
 	 * @param   String  $extName  The extension name
 	 */
-	public function __construct($folder, $extName, $type = "components")
+	public function __construct($folder, $extName)
 	{
 		parent::__construct();
 
 		$this->source = $this->getSourceFolder() . "/" . $folder;
 		$this->extName = $extName;
 
-		$this->target = $this->getBuildFolder() . "/" . $type . "/" . $extName . "/" . $folder;
+		$this->target = $extName . "/" . $folder;
 	}
 
 	/**
@@ -67,7 +69,9 @@ class Media extends Base implements TaskInterface
 
 		$this->prepareDirectory();
 
-		$map = $this->copyTarget($this->source, $this->target);
+		$target = $this->getBuildFolder() . "/" . $this->type . "/" . $this->target;
+
+		$map = $this->copyTarget($this->source, $target);
 
 		$this->setResultFiles($map);
 
@@ -81,6 +85,7 @@ class Media extends Base implements TaskInterface
 	 */
 	private function prepareDirectory()
 	{
-		$this->_mkdir($this->target);
+		$target = $this->getBuildFolder() . "/" . $this->type . "/" . $this->target;
+		$this->_mkdir($target);
 	}
 }

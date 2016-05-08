@@ -72,6 +72,7 @@ class Plugin extends Base implements TaskInterface
 
 		// Build media (relative path)
 		$media = $this->buildMedia("media/" . $plgName, $plgName, "plugin");
+		$media->type = 'plugins';
 		$media->run();
 
 		$this->addFiles('media', $media->getResultFiles());

@@ -23,6 +23,30 @@ class Base extends JTask implements TaskInterface
 	use \Robo\Task\Development\loadTasks;
 	use \Robo\Common\TaskIO;
 
+	protected $hasComponent = true;
+
+	protected $hasModules = true;
+
+	protected $hasPackage = true;
+
+	protected $hasPlugins = true;
+
+	protected $hasLibraries = true;
+
+	protected $hasCBPlugins = true;
+
+	protected $hasTemplates = true;
+
+	/**
+	 * Base constructor.
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+
+		$this->analyze();
+	}
+
 	/**
 	 * Returns true
 	 *
@@ -31,5 +55,111 @@ class Base extends JTask implements TaskInterface
 	public function run()
 	{
 		return true;
+	}
+
+	/**
+	 * Build the package
+	 *
+	 * @param   string $target Target
+	 *
+	 * @return  bool
+	 */
+	public function createZip($target = '')
+	{
+
+		if (empty($target))
+		{
+			$target = JPATH_BASE . "/dist/" . $this->getExtensionName() . "-" . $this->getConfig()->version . ".zip";
+		}
+
+		$zip = new \ZipArchive($target, \ZipArchive::CREATE);
+		$this->say('Zipping ' . $this->getConfig()->extension . " " . $this->getConfig()->version);
+
+		// Instantiate the zip archive
+		$zip->open($target, \ZipArchive::CREATE);
+
+		//Current Extension Path
+		$current = JPATH_BASE . "/dist/current";
+
+		// Process the files to zip
+		foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($current), \RecursiveIteratorIterator::SELF_FIRST) as $subfolder)
+		{
+			if ($subfolder->isFile())
+			{
+				// Set all separators to forward slashes for comparison
+				$usefolder = str_replace('\\', '/', $subfolder->getPath());
+
+				// Drop the folder part as we don't want them added to archive
+				$addpath = str_ireplace($current, '', $usefolder);
+
+				// Remove preceding slash
+				$findfirst = strpos($addpath, '/');
+
+				if ($findfirst == 0 && $findfirst !== false)
+				{
+					$addpath = substr($addpath, 1);
+				}
+
+				if (strlen($addpath) > 0 || empty($addpath))
+				{
+					$addpath .= '/';
+				}
+
+				$options = array('add_path' => $addpath, 'remove_all_path' => true);
+				$zip->addGlob($usefolder . '/*.*', GLOB_BRACE, $options);
+			}
+		}
+
+		// Close the zip archive
+		$zip->close();
+
+		return true;
+	}
+
+	/**
+	 * Analyze the extension structure
+	 *
+	 * @return  void
+	 */
+	private function analyze()
+	{
+		// Check if we have component, module, plugin etc.
+		if (!file_exists($this->getSourceFolder() . "/administrator/components/com_" . $this->getExtensionName())
+			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName())
+		)
+		{
+			$this->say("Extension has no component");
+			$this->hasComponent = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/modules"))
+		{
+			$this->hasModules = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/plugins"))
+		{
+			$this->hasPlugins = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/templates"))
+		{
+			$this->hasTemplates = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/libraries"))
+		{
+			$this->hasLibraries = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/administrator/manifests/packages"))
+		{
+			$this->hasPackage = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/components/com_comprofiler"))
+		{
+			$this->hasCBPlugins = false;
+		}
 	}
 }

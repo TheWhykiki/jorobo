@@ -80,7 +80,7 @@ class Extension extends Base implements TaskInterface
 		// Build component
 		if ($this->hasComponent)
 		{
-			$this->buildComponent($this->params)->run();
+			$this->buildComponentPack($this->params)->run();
 		}
 
 		// Modules

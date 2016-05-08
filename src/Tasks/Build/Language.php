@@ -24,6 +24,8 @@ class Language extends Base implements TaskInterface
 	use \Robo\Task\Development\loadTasks;
 	use \Robo\Common\TaskIO;
 
+	public $componentPack = null;
+
 	protected $ext = null;
 
 	protected $type = "com";
@@ -124,7 +126,14 @@ class Language extends Base implements TaskInterface
 
 			if ($this->type == "com")
 			{
-				$comTarget = "/components/" . $this->ext . "/administrator";
+				if ($this->componentPack)
+				{
+					$comTarget = '/administrator';
+				}
+				else
+				{
+					$comTarget = "/components/" . $this->ext . "/administrator";
+				}
 			}
 
 
@@ -177,8 +186,15 @@ class Language extends Base implements TaskInterface
 		{
 			if ($this->hasAdminLang)
 			{
-				$this->_mkdir($this->getBuildFolder()
-					. "/components/" . $this->ext . "/administrator/language");
+				if ($this->componentPack)
+				{
+					$this->_mkdir($this->getBuildFolder() . "/administrator/language");
+				}
+				else
+				{
+					$this->_mkdir($this->getBuildFolder()
+						. "/components/" . $this->ext . "/administrator/language");
+				}
 			}
 
 			if ($this->hasFrontLang)

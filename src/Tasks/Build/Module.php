@@ -67,6 +67,7 @@ class Module extends Base implements TaskInterface
 
 		// Build media (relative path)
 		$media = $this->buildMedia("media/" . $this->modName, $this->modName);
+		$media->type = 'modules';
 		$media->run();
 
 		$this->addFiles('media', $media->getResultFiles());

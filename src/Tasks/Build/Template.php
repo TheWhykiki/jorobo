@@ -67,6 +67,7 @@ class Template extends Base implements TaskInterface
 
 		// Build media (relative path)
 		$media = $this->buildMedia("media/tpl_" . $this->templateName, "tpl_" . $this->templateName, "templates");
+		$media->type = 'templates';
 		$media->run();
 
 		$this->addFiles('media', $media->getResultFiles());

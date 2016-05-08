@@ -46,11 +46,10 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 	 */
 	protected $sourceFolder = '';
 
-
 	/**
 	 * Construct
 	 *
-	 * @param   array  $params  Opt params
+	 * @param   array $params Opt params
 	 */
 	public function __construct($params = array())
 	{
@@ -60,104 +59,9 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 	}
 
 	/**
-	 * Function to check if folders are existing / writable (Code Base etc.)
-	 *
-	 * @return  bool
-	 */
-	public function checkFolders()
-	{
-		$dirHandle = opendir($this->getSourceFolder());
-
-		if ($dirHandle === false)
-		{
-			$this->printTaskError('Can not open ' . $this->getSourceFolder() . ' for parsing');
-
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Get the operating system
-	 *
-	 * @return string
-	 */
-	public function getOs()
-	{
-		return $this->os;
-	}
-
-	/**
-	 * Get the build config
-	 *
-	 * @return  object
-	 */
-	public function getConfig()
-	{
-		return self::$config;
-	}
-
-	/**
-	 * Get the source folder path
-	 *
-	 * @return  string  absolute path
-	 */
-	public function getSourceFolder()
-	{
-		return $this->sourceFolder;
-	}
-
-	/**
-	 * Get the extension name
-	 *
-	 * @return   string
-	 */
-	public function getExtensionName()
-	{
-		return strtolower($this->getConfig()->extension);
-	}
-
-	/**
-	 * Get the destination / build folder
-	 *
-	 * @return   string
-	 */
-	public function getBuildFolder()
-	{
-		return $this->getConfig()->buildFolder;
-	}
-
-	/**
-	 * Sets the source folder
-	 */
-	private function determineSourceFolder()
-	{
-		$this->sourceFolder = JPATH_BASE . "/" . $this->getConfig()->source;
-
-		if (!is_dir($this->sourceFolder))
-		{
-			$this->say('Warning - Directory: ' . $this->sourceFolder . ' is not available');
-		}
-	}
-
-	/**
-	 * Sets the operating system
-	 */
-	private function determineOperatingSystem()
-	{
-		$this->os = strtoupper(substr(PHP_OS, 0, 3));
-
-		if ($this->os === 'WIN')
-		{
-			$this->fileExtension = '.exe';
-		}
-	}
-
-	/**
 	 * Load config
 	 *
-	 * @param   array  $params  Optional Params
+	 * @param   array $params Optional Params
 	 *
 	 * @return  bool
 	 */
@@ -204,7 +108,7 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 	/**
 	 * Check if we are building a dev release
 	 *
-	 * @param   array  $params  - Robo.li Params
+	 * @param   array $params - Robo.li Params
 	 *
 	 * @return  mixed
 	 */
@@ -216,26 +120,124 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 	/**
 	 * Get target
 	 *
-	 * @param   object  $config  - The JoRobo config
+	 * @param   object $config - The JoRobo config
 	 *
 	 * @return  string
 	 */
 	private function determineTarget($config)
 	{
+		$target = "/dist/";
+
 		if (!isset($config->extension))
 		{
-			return 'unnamed';
+			$target .= 'unnamed';
 		}
-
-		$target = "/dist/" . $config->extension;
+		
+		$target .= $config->extension;
 
 		if (!empty($config->version))
 		{
-			$target = "/dist/" . $config->extension . "-" . $config->version;
-
-			return $target;
+			$target .= "-" . $config->version;
 		}
 
 		return $target;
+	}
+
+	/**
+	 * Sets the operating system
+	 */
+	private function determineOperatingSystem()
+	{
+		$this->os = strtoupper(substr(PHP_OS, 0, 3));
+
+		if ($this->os === 'WIN')
+		{
+			$this->fileExtension = '.exe';
+		}
+	}
+
+	/**
+	 * Sets the source folder
+	 */
+	private function determineSourceFolder()
+	{
+		$this->sourceFolder = JPATH_BASE . "/" . $this->getConfig()->source;
+
+		if (!is_dir($this->sourceFolder))
+		{
+			$this->say('Warning - Directory: ' . $this->sourceFolder . ' is not available');
+		}
+	}
+
+	/**
+	 * Get the build config
+	 *
+	 * @return  object
+	 */
+	public function getConfig()
+	{
+		return self::$config;
+	}
+
+	/**
+	 * Function to check if folders are existing / writable (Code Base etc.)
+	 *
+	 * @return  bool
+	 */
+	public function checkFolders()
+	{
+		$return    = true;
+		$dirHandle = opendir($this->getSourceFolder());
+
+		if ($dirHandle === false)
+		{
+			$this->printTaskError('Can not open ' . $this->getSourceFolder() . ' for parsing');
+
+			$return = false;
+		}
+
+		closedir($dirHandle);
+
+		return $return;
+	}
+
+	/**
+	 * Get the source folder path
+	 *
+	 * @return  string  absolute path
+	 */
+	public function getSourceFolder()
+	{
+		return $this->sourceFolder;
+	}
+
+	/**
+	 * Get the operating system
+	 *
+	 * @return string
+	 */
+	public function getOs()
+	{
+		return $this->os;
+	}
+
+	/**
+	 * Get the extension name
+	 *
+	 * @return   string
+	 */
+	public function getExtensionName()
+	{
+		return strtolower($this->getConfig()->extension);
+	}
+
+	/**
+	 * Get the destination / build folder
+	 *
+	 * @return   string
+	 */
+	public function getBuildFolder()
+	{
+		return $this->getConfig()->buildFolder;
 	}
 }

@@ -8,6 +8,7 @@
 
 namespace Joomla\Jorobo\Tasks\Deploy;
 
+use Joomla\Jorobo\Tasks\Build;
 use Joomla\Jorobo\Tasks\JTask;
 use Robo\Contract\TaskInterface;
 
@@ -18,38 +19,26 @@ class Package extends Base implements TaskInterface
 {
 	use \Robo\Task\Development\loadTasks;
 	use \Robo\Common\TaskIO;
+	use Build\buildTasks;
+	use deployTasks;
 
-	/**
-	 * The target Zip file of the package
-	 *
-	 * @var    string
-	 */
 	protected $target = null;
 
-	protected $packageFiles = array();
+	protected $current = null;
 
-	private $hasComponent = true;
+	protected $hasComponent = true;
 
-	private $hasModules = true;
+	protected $hasModules = true;
 
-	private $hasTemplates = true;
+	protected $hasPackage = true;
 
-	private $hasPlugins = true;
+	protected $hasPlugins = true;
 
-	private $hasLibraries = true;
+	protected $hasLibraries = true;
 
-	private $hasCBPlugins = true;
+	protected $hasCBPlugins = true;
 
-	/**
-	 * Initialize Build Task
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-
-		$this->target  = JPATH_BASE . "/dist/pkg_" . $this->getExtensionName() . "-" . $this->getConfig()->version . ".zip";
-		$this->current = JPATH_BASE . "/dist/current";
-	}
+	protected $hasTemplates = true;
 
 	/**
 	 * Build the package
@@ -58,8 +47,19 @@ class Package extends Base implements TaskInterface
 	 */
 	public function run()
 	{
-		// TODO improve DRY!
-		$this->say('Creating package ' . $this->getConfig()->extension . " " . $this->getConfig()->version);
+		if (!$this->hasPackage)
+		{
+			$this->deployZip()->run();
+			return true;
+		}
+
+		$params        = $this->getConfig()->params;
+		$extension     = $this->getConfig()->extension;
+		$version       = $this->getConfig()->version;
+		$this->target  = JPATH_BASE . "/dist/pkg_" . $extension . "-" . $version . ".zip";
+		$this->current = JPATH_BASE . "/dist/current";
+
+		$this->say('Creating package ' . $extension . " " . $version);
 
 		// Start getting single archives
 		if (file_exists(JPATH_BASE . '/dist/zips'))
@@ -69,27 +69,81 @@ class Package extends Base implements TaskInterface
 
 		$this->_mkdir(JPATH_BASE . '/dist/zips');
 
-		$this->analyze();
-
 		if ($this->hasComponent)
 		{
+			$this->buildComponent($params)->run();
 			$this->createExtensionZips("components");
 		}
 
 		if ($this->hasModules)
 		{
+			$modules = $this->getSubExtensionName('modules');
+
+			if (!empty($modules))
+			{
+				foreach ($modules as $module)
+				{
+					$this->buildModule($module, $params)->run();
+				}
+			}
+
 			$this->createExtensionZips("modules");
 		}
 
 		if ($this->hasPlugins)
 		{
+			$path = $this->getSourceFolder() . "/plugins";
+			$types = $this->getSubExtensionName('plugins');
+
+			if (!empty($types))
+			{
+				foreach ($types as $type)
+				{
+					$p = $path . "/" . $type;
+
+					// Get every plugin
+					$hdl = opendir($p);
+
+					while ($plugin = readdir($hdl))
+					{
+						// Ignore hidden files
+						if (substr($plugin, 0, 1) == '.')
+						{
+							continue;
+						}
+
+						// Only folders
+						$p2 = $p . "/" . $plugin;
+
+						if (!is_file($p2))
+						{
+							$this->buildPlugin($type, $plugin, $params)->run();
+						}
+					}
+
+					closedir($hdl);
+				}
+			}
+
 			$this->createExtensionZips("plugins");
 		}
 
 		if ($this->hasTemplates)
 		{
+			$templates = $this->getSubExtensionName('templates');
+
+			if (!empty($templates))
+			{
+				foreach ($templates as $template)
+				{
+					$this->buildTemplate($template, $params)->run();
+				}
+			}
+
 			$this->createExtensionZips("templates");
 		}
+
+		$this->buildPackage($params)->run();
 
 		$this->createPackageZip();
 
@@ -99,54 +153,13 @@ class Package extends Base implements TaskInterface
 	}
 
 	/**
-	 * Analyze the extension structure
-	 *
-	 * @return  void
-	 */
-	private function analyze()
-	{
-		// Check if we have component, module, plugin etc.
-		if (!file_exists($this->getBuildFolder() . "/administrator/components/com_" . $this->getExtensionName())
-			&& !file_exists($this->getBuildFolder() . "/components/com_" . $this->getExtensionName())
-		)
-		{
-			$this->say("Extension has no component");
-			$this->hasComponent = false;
-		}
-
-		if (!file_exists($this->getBuildFolder() . "/modules"))
-		{
-			$this->hasModules = false;
-		}
-
-		if (!file_exists($this->getBuildFolder() . "/plugins"))
-		{
-			$this->hasPlugins = false;
-		}
-
-		if (!file_exists($this->getBuildFolder() . "/templates"))
-		{
-			$this->hasTemplates = false;
-		}
-
-		if (!file_exists($this->getBuildFolder() . "/libraries"))
-		{
-			$this->hasLibraries = false;
-		}
-
-		if (!file_exists($this->getBuildFolder() . "/components/com_comprofiler"))
-		{
-			$this->hasCBPlugins = false;
-		}
-	}
-
-	/**
 	 * Create zips for Extensions
 	 *
-	 * @param   string  $type  Extension Type
+	 * @param   string $type Extension Type
+	 *
 	 * @return  void
 	 */
-	public function createExtensionZips($type)
+	private function createExtensionZips($type)
 	{
 		$path = $this->getBuildFolder() . "/" . $type;
 
@@ -173,8 +186,7 @@ class Package extends Base implements TaskInterface
 				$this->say("Packaging " . ucfirst($type) . " " . $ext);
 
 				// Package file
-				$zip = new Zip(JPATH_BASE . '/dist/zips/' . $ext . '.zip');
-				$zip->run();
+				$this->createZip(JPATH_BASE . '/dist/zips/' . $ext . '.zip');
 
 				$a = explode("_", $ext);
 
@@ -203,9 +215,9 @@ class Package extends Base implements TaskInterface
 	 *
 	 * @return  void
 	 */
-	public function createPackageZip()
+	private function createPackageZip()
 	{
-		$path = $this->getBuildFolder() . "/pkg_" . $this->getExtensionName();
+		$path    = $this->getBuildFolder() . "/pkg_" . $this->getExtensionName();
 		$pSource = JPATH_BASE . '/dist/zips';
 		$pTarget = $path . "/";
 
@@ -228,7 +240,7 @@ class Package extends Base implements TaskInterface
 			$fileList[] = '<file ' . $attributes . '>' . $file . '.zip</file>';
 		}
 
-		$f = implode("\n", $fileList);
+		$f       = implode("\n", $fileList);
 		$xmlFile = $path . "/pkg_" . $this->getExtensionName() . ".xml";
 
 		$this->taskReplaceInFile($xmlFile)
@@ -241,7 +253,43 @@ class Package extends Base implements TaskInterface
 		$this->say("Packaging Package " . $this->getExtensionName());
 
 		// Package file
-		$zip = new Zip($this->target);
-		$zip->run();
+		$this->createZip($this->target);
+	}
+
+	/**
+	 * Get Name of Extensions from type
+	 *
+	 * @param   string  $type  modules, plugins, templates...
+	 *
+	 * @return  array
+	 */
+	private function getSubExtensionName($type)
+	{
+		$return = array();
+		$path   = $this->getSourceFolder() . "/" . $type;
+
+		// Get every subextension from type
+		$hdl = opendir($path);
+
+		while ($entry = readdir($hdl))
+		{
+			// Ignore hidden files
+			if (substr($entry, 0, 1) == '.')
+			{
+				continue;
+			}
+
+			// Only folders
+			$p = $path . "/" . $entry;
+
+			if (!is_file($p))
+			{
+				$return[] = $entry;
+			}
+		}
+
+		closedir($hdl);
+
+		return $return;
 	}
 }
