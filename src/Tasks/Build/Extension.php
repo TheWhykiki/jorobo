@@ -27,20 +27,6 @@ class Extension extends Base implements TaskInterface
 	 */
 	protected $params = null;
 
-	private $hasComponent = true;
-
-	private $hasModules = true;
-
-	private $hasPackage = true;
-
-	private $hasPlugins = true;
-
-	private $hasLibraries = true;
-
-	private $hasCBPlugins = true;
-
-	private $hasTemplates = true;
-
 	private $modules = array();
 
 	private $plugins = array();
@@ -74,8 +60,6 @@ class Extension extends Base implements TaskInterface
 	public function run()
 	{
 		$this->say('Building Extension package');
-
-		$this->analyze();
 
 		// Build component
 		if ($this->hasComponent)
@@ -280,52 +264,5 @@ class Extension extends Base implements TaskInterface
 		}
 
 		return true;
-	}
-
-	/**
-	 * Analyze the extension structure
-	 *
-	 * @return  void
-	 */
-	private function analyze()
-	{
-		// Check if we have component, module, plugin etc.
-		if (!file_exists($this->getSourceFolder() . "/administrator/components/com_" . $this->getExtensionName())
-			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName())
-		)
-		{
-			$this->say("Extension has no component");
-			$this->hasComponent = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/modules"))
-		{
-			$this->hasModules = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/plugins"))
-		{
-			$this->hasPlugins = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/templates"))
-		{
-			$this->hasTemplates = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/libraries"))
-		{
-			$this->hasLibraries = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/administrator/manifests/packages"))
-		{
-			$this->hasPackage = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/components/com_comprofiler"))
-		{
-			$this->hasCBPlugins = false;
-		}
 	}
 }

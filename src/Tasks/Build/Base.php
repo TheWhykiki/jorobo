@@ -312,27 +312,7 @@ class Base extends JTask implements TaskInterface
 		{
 			return "";
 		}
-/*
-		$text = array();
 
-		foreach ($files as $f)
-		{
-			foreach ($f as $type => $value)
-			{
-				$p = "";
-
-				if ($value == $plugin . ".php")
-				{
-					$p = ' plugin="' . $plugin . '"';
-
-				}
-
-				$text[] = "<" . $type . $p . ">" . $value . "</" . $type . ">";
-			}
-		}
-
-		return implode("\n", $text);
-*/
 		return $this->generateFileList($files, $plugin, "plugin");
 	}
 
@@ -350,27 +330,7 @@ class Base extends JTask implements TaskInterface
 		{
 			return "";
 		}
-/*
-		$text = array();
 
-		foreach ($files as $f)
-		{
-			foreach ($f as $type => $value)
-			{
-				$p = "";
-
-				if ($value == $module . ".php")
-				{
-					$p = ' module="' . $module . '"';
-
-				}
-
-				$text[] = "<" . $type . $p . ">" . $value . "</" . $type . ">";
-			}
-		}
-
-		return implode("\n", $text);
-*/
 		return $this->generateFileList($files, $module, "module");
 	}
 

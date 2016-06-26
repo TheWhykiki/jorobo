@@ -68,6 +68,9 @@ class Plugin extends Base implements TaskInterface
 		// Prepare directories
 		$this->prepareDirectories();
 
+		// Create symlink to current folder
+		$this->_symlink($this->target, JPATH_BASE . "/dist/current");
+
 		$files = $this->copyTarget($this->source, $this->target);
 
 		// Build media (relative path)
@@ -84,9 +87,6 @@ class Plugin extends Base implements TaskInterface
 		// Update XML and script.php
 		$this->createInstaller($files);
 
-		// Create symlink to current folder
-		$this->_symlink($this->target, JPATH_BASE . "/dist/current");
-
 
 		return true;
 	}
@@ -99,6 +99,10 @@ class Plugin extends Base implements TaskInterface
 	 */
 	private function prepareDirectories()
 	{
+		if (file_exists($this->target))
+		{
+			$this->_deleteDir($this->target);
+		}
 		$this->_mkdir($this->target);
 	}
 

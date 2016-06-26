@@ -22,23 +22,7 @@ class Zip extends Base implements TaskInterface
 	use Build\buildTasks;
 	use deployTasks;
 
-	protected $target = null;
-
 	protected $current = null;
-
-	protected $hasComponent = true;
-
-	protected $hasModules = true;
-
-	protected $hasPackage = true;
-
-	protected $hasPlugins = true;
-
-	protected $hasLibraries = true;
-
-	protected $hasCBPlugins = true;
-
-	protected $hasTemplates = true;
 
 	/**
 	 * Build the package
@@ -56,9 +40,8 @@ class Zip extends Base implements TaskInterface
 
 		$type      = '';
 		$params    = $this->getConfig()->params;
-		$extension = $this->getConfig()->extension;
+		$extension = $this->getExtensionName();
 		$version   = $this->getConfig()->version;
-		$current   = JPATH_BASE . "/dist/" . $extension . "-" . $version;
 
 		$this->say('Creating Extension ' . $extension . " " . $version);
 
@@ -109,12 +92,13 @@ class Zip extends Base implements TaskInterface
 
 		$target = JPATH_BASE . "/dist/" . $ext . $type . "_" . $extension . "-" . $version . ".zip";
 
-		$this->_symlink($current, JPATH_BASE . "/dist/current");
-
 		// Package file
-		$this->createZip($target);
+		if ($this->createZip($target))
+		{
+			$this->setConfigZipFile($ext . $type . "_" . $extension . "-" . $version . ".zip");
+		}
 
-		$this->_symlink($target, JPATH_BASE . "/dist/" . $ext . "-" . $this->getExtensionName() . "-current.zip");
+		$this->_symlink($target, JPATH_BASE . "/dist/" . $ext . "-" . $extension . "-current.zip");
 
 		return true;
 	}

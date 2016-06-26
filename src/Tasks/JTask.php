@@ -46,6 +46,20 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 	 */
 	protected $sourceFolder = '';
 
+	protected $hasComponent = true;
+
+	protected $hasModules = true;
+
+	protected $hasPackage = true;
+
+	protected $hasPlugins = true;
+
+	protected $hasLibraries = true;
+
+	protected $hasCBPlugins = true;
+
+	protected $hasTemplates = true;
+
 	/**
 	 * Construct
 	 *
@@ -56,6 +70,7 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 		$this->loadConfiguration($params);
 		$this->determineOperatingSystem();
 		$this->determineSourceFolder();
+		$this->analyze();
 	}
 
 	/**
@@ -240,4 +255,61 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 	{
 		return $this->getConfig()->buildFolder;
 	}
+
+	/**
+	 * Analyze the extension structure
+	 *
+	 * @return  void
+	 */
+	private function analyze()
+	{
+		// Check if we have component, module, plugin etc.
+		if (!file_exists($this->getSourceFolder() . "/administrator/components/com_" . $this->getExtensionName())
+			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName())
+		)
+		{
+			$this->say("Extension has no component");
+			$this->hasComponent = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/modules"))
+		{
+			$this->hasModules = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/plugins"))
+		{
+			$this->hasPlugins = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/templates"))
+		{
+			$this->hasTemplates = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/libraries"))
+		{
+			$this->hasLibraries = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/administrator/manifests/packages"))
+		{
+			$this->hasPackage = false;
+		}
+
+		if (!file_exists($this->getSourceFolder() . "/components/com_comprofiler"))
+		{
+			$this->hasCBPlugins = false;
+		}
+	}
+
+	/**
+	 * @param array|null $config
+	 */
+	public static function setConfigZipFile($zipfile)
+	{
+		self::$config->zipfile = $zipfile;
+	}
+
+
 }

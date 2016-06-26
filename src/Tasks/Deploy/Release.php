@@ -8,6 +8,7 @@
 
 namespace Joomla\Jorobo\Tasks\Deploy;
 
+use Faker\Provider\DateTime;
 use Joomla\Registry\Registry;
 use Joomla\Github\Github;
 use Joomla\Http\Http;
@@ -101,7 +102,7 @@ class Release extends Base implements TaskInterface
 
 		foreach ($pulls as $pull)
 		{
-			if (!$latest_release || strtotime($pull->merged_at) > strtotime($latest_release->published_at))
+			if (!$latest_release || (isset($pull->merged_at) && strtotime($pull->merged_at) > strtotime($latest_release->published_at)))
 			{
 				if($this->getConfig()->github->changelog_source == "pr")
 				{
@@ -230,14 +231,7 @@ class Release extends Base implements TaskInterface
 	 */
 	protected function uploadToGithub($version, $githubToken, $upload_url)
 	{
-		$deploy = explode(' ', $this->getConfig()->target);
-
-		$zipfile = $this->getExtensionName() . '-' . $this->getConfig()->version . '.zip';
-
-		if (in_array('package', $deploy))
-		{
-			$zipfile = 'pkg-' . $zipfile;
-		}
+		$zipfile = $this->getConfig()->zipfile;
 
 		$zipfilepath =  JPATH_BASE . '/dist/' . $zipfile;
 

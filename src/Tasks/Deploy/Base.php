@@ -23,28 +23,12 @@ class Base extends JTask implements TaskInterface
 	use \Robo\Task\Development\loadTasks;
 	use \Robo\Common\TaskIO;
 
-	protected $hasComponent = true;
-
-	protected $hasModules = true;
-
-	protected $hasPackage = true;
-
-	protected $hasPlugins = true;
-
-	protected $hasLibraries = true;
-
-	protected $hasCBPlugins = true;
-
-	protected $hasTemplates = true;
-
 	/**
 	 * Base constructor.
 	 */
 	public function __construct()
 	{
 		parent::__construct();
-
-		$this->analyze();
 	}
 
 	/**
@@ -114,52 +98,5 @@ class Base extends JTask implements TaskInterface
 		$zip->close();
 
 		return true;
-	}
-
-	/**
-	 * Analyze the extension structure
-	 *
-	 * @return  void
-	 */
-	private function analyze()
-	{
-		// Check if we have component, module, plugin etc.
-		if (!file_exists($this->getSourceFolder() . "/administrator/components/com_" . $this->getExtensionName())
-			&& !file_exists($this->getSourceFolder() . "/components/com_" . $this->getExtensionName())
-		)
-		{
-			$this->say("Extension has no component");
-			$this->hasComponent = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/modules"))
-		{
-			$this->hasModules = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/plugins"))
-		{
-			$this->hasPlugins = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/templates"))
-		{
-			$this->hasTemplates = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/libraries"))
-		{
-			$this->hasLibraries = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/administrator/manifests/packages"))
-		{
-			$this->hasPackage = false;
-		}
-
-		if (!file_exists($this->getSourceFolder() . "/components/com_comprofiler"))
-		{
-			$this->hasCBPlugins = false;
-		}
 	}
 }
