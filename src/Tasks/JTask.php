@@ -311,5 +311,49 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 		self::$config->zipfile = $zipfile;
 	}
 
+	/**
+	 * Create Symlinks based on operating System
+	 *
+	 * @param  string  $from  Sourcepath
+	 * @param  string  $to    Targetpath
+	 *
+	 * @return   void
+	 */
+	public function createSymlink($from, $to)
+	{
+		if ($this->isWindows())
+		{
+			$this->_exec('mklink /J ' . $to . $this->getWindowsPath($from));
+		}
+		else
+		{
+			$this->_symlink($from, $to);
+		}
+	}
 
+	/**
+	 * Check if local OS is Windows
+	 *
+	 * @return  bool
+	 *
+	 * @since   3.7.3
+	 */
+	private function isWindows()
+	{
+		return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+	}
+
+	/**
+	 * Return the correct path for Windows (needed by CMD)
+	 *
+	 * @param   string $path Linux path
+	 *
+	 * @return  string
+	 *
+	 * @since   3.7.3
+	 */
+	private function getWindowsPath($path)
+	{
+		return str_replace('/', DIRECTORY_SEPARATOR, $path);
+	}
 }
