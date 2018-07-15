@@ -99,7 +99,7 @@ class Zip extends Base implements TaskInterface
 			$this->setConfigZipFile($ext . $type . "_" . $extension . "-" . $version . ".zip");
 		}
 
-		$this->_symlink($target, JPATH_BASE . "/dist/" . $ext . "-" . $extension . "-current.zip");
+		$this->createSymlink($target, JPATH_BASE . "/dist/" . $ext . "-" . $extension . "-current.zip");
 
 		return true;
 	}

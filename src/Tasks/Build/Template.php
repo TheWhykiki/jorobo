@@ -64,7 +64,7 @@ class Template extends Base implements TaskInterface
 		$this->prepareDirectories();
 
 		// Create symlink to current folder
-		$this->_symlink($this->target, JPATH_BASE . "/dist/current");
+		$this->createSymlink($this->target, JPATH_BASE . "/dist/current");
 
 		$files = $this->copyTarget($this->source, $this->target);
 

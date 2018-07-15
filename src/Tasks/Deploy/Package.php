@@ -147,7 +147,7 @@ class Package extends Base implements TaskInterface
 
 		$this->createPackageZip();
 
-		$this->_symlink($this->target, JPATH_BASE . "/dist/pkg-" . $this->getExtensionName() . "-current.zip");
+		$this->createSymlink($this->target, JPATH_BASE . "/dist/pkg-" . $this->getExtensionName() . "-current.zip");
 
 		return true;
 	}
@@ -181,7 +181,7 @@ class Package extends Base implements TaskInterface
 				// Extension name folder
 				$ext = $entry;
 
-				$this->_symlink($p, $this->current);
+				$this->createSymlink($p, $this->current);
 
 				$this->say("Packaging " . ucfirst($type) . " " . $ext);
 
@@ -248,7 +248,7 @@ class Package extends Base implements TaskInterface
 			->to($f)
 			->run();
 
-		$this->_symlink($path, $this->current);
+		$this->createSymlink($path, $this->current);
 
 		$this->say("Packaging Package " . $this->getExtensionName());
 
