@@ -86,6 +86,7 @@ class Zip extends Base implements TaskInterface
 
 			if ($this->hasTemplates)
 			{
+				$ext = 'tpl';
 				$this->buildTemplate($extension, $params)->run();
 			}
 		}
