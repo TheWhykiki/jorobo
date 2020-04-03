@@ -93,10 +93,20 @@ class Zip extends Base implements TaskInterface
 
 		$target = JPATH_BASE . "/dist/" . $ext . $type . "_" . $extension . "-" . $version . ".zip";
 
+		if (is_file($target))
+		{
+			unlink($target);
+		}
+
 		// Package file
 		if ($this->createZip($target))
 		{
 			$this->setConfigZipFile($ext . $type . "_" . $extension . "-" . $version . ".zip");
+		}
+
+		if (is_file(JPATH_BASE . "/dist/" . $ext . "-" . $extension . "-current.zip"))
+		{
+			unlink(JPATH_BASE . "/dist/" . $ext . "-" . $extension . "-current.zip");
 		}
 
 		$this->createSymlink($target, JPATH_BASE . "/dist/" . $ext . "-" . $extension . "-current.zip");

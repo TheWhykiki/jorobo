@@ -63,7 +63,7 @@ class Base extends JTask implements TaskInterface
 		$zip->open($target, \ZipArchive::CREATE);
 
 		//Current Extension Path
-		$current = JPATH_BASE . "/dist/current";
+		$current = str_replace('\\', '/', JPATH_BASE . "/dist/current");
 
 		// Process the files to zip
 		foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($current), \RecursiveIteratorIterator::SELF_FIRST) as $subfolder)

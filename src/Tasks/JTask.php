@@ -147,7 +147,7 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 		{
 			$target .= 'unnamed';
 		}
-		
+
 		$target .= $config->extension;
 
 		if (!empty($config->version))
@@ -323,7 +323,23 @@ abstract class JTask extends \Robo\Tasks implements TaskInterface
 	{
 		if ($this->isWindows())
 		{
-			$this->_exec('mklink /J ' . $to . $this->getWindowsPath($from));
+			$to = str_replace('/', DIRECTORY_SEPARATOR, $to);
+
+			if (is_dir($to))
+			{
+				$this->_deleteDir($to);
+			}
+
+			$from = realpath($this->getWindowsPath($from));
+
+			if (is_file($from))
+			{
+				$this->_symlink($from, $to);
+
+				return;
+			}
+
+			$this->_exec('mklink /J ' . $to . ' ' . $from);
 		}
 		else
 		{
