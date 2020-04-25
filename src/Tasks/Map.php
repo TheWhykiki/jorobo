@@ -100,7 +100,7 @@ class Map extends JTask implements TaskInterface
 		$sourceFolder = $this->getSourceFolder();
 		$this->processComponents($sourceFolder . '/administrator/components', $this->target . '/administrator');
 		$this->processLanguage($sourceFolder . '/administrator/language', $this->target . '/administrator');
-		$this->processModules($sourceFolder . '/administrator/modules', $this->target . '/administrator/modules');
+		$this->processModules($sourceFolder . '/administrator/modules', $this->target . '/administrator');
 	}
 
 
