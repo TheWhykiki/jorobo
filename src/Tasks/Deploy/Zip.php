@@ -31,6 +31,12 @@ class Zip extends Base implements TaskInterface
 	 */
 	public function run()
 	{
+		if (!defined('GLOB_BRACE'))
+		{
+			define ('GLOB_BRACE', 0);
+
+		}
+
 		if ($this->hasPackage)
 		{
 			$this->deployPackage()->run();
