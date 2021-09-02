@@ -28,6 +28,7 @@ Desktop.ini
 
 # composer
 composer.phar
+composer.lock
 vendor/*
 
 # Robo
