@@ -187,9 +187,16 @@ class Base extends JTask implements TaskInterface
 
 			if (is_file($p))
 			{
-				$map[] = array("file" => $entry);
-				$this->_copy($p, $tar . "/" . $entry);
-			}
+                $map[]  = array("file" => $entry);
+                $target = $tar . "/" . $entry;
+                $this->_copy($p, $target);
+
+                if (pathinfo($entry, PATHINFO_EXTENSION) != 'ini')
+                {
+                    // Version & Date Replace
+                    $this->replaceInFile($target);
+                }
+            }
 			else
 			{
 				$map[] = array("folder" => $entry);
