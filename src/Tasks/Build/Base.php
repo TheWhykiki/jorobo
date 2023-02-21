@@ -30,24 +30,73 @@ class Base extends JTask implements TaskInterface
 	 *
 	 * They need to be static in order to support multiple files and LANGUAGE
 	 *
-	 * @var  array
+	 * @var    array
+	 *
+	 * @since  1.0
 	 */
 	protected static $mediaFiles = array();
 
+	/**
+	 * Frontend files
+	 *
+	 * They need to be static in order to support multiple files and LANGUAGE
+	 *
+	 * @var    array
+	 *
+	 * @since  1.0
+	 */
 	protected static $frontendFiles = array();
 
+	/**
+	 * Backend files
+	 *
+	 * They need to be static in order to support multiple files and LANGUAGE
+	 *
+	 * @var    array
+	 *
+	 * @since  1.0
+	 */
 	protected static $backendFiles = array();
 
+	/**
+	 * Frontend language files
+	 *
+	 * They need to be static in order to support multiple files and LANGUAGE
+	 *
+	 * @var    array
+	 *
+	 * @since  1.0
+	 */
 	protected static $frontendLanguageFiles = array();
 
+	/**
+	 * Backend language files
+	 *
+	 * They need to be static in order to support multiple files and LANGUAGE
+	 *
+	 * @var    array
+	 *
+	 * @since  1.0
+	 */
 	protected static $backendLanguageFiles = array();
 
+	/**
+	 * Result files
+	 *
+	 * They need to be static in order to support multiple files and LANGUAGE
+	 *
+	 * @var    array
+	 *
+	 * @since  1.0
+	 */
 	protected $resultFiles = array();
 
 	/**
 	 * Returns true
 	 *
 	 * @return  bool
+	 *
+	 * @since   1.0
 	 */
 	public function run()
 	{
@@ -60,7 +109,9 @@ class Base extends JTask implements TaskInterface
 	 * @param   string  $type       - Type (media, component etc.)
 	 * @param   array   $fileArray  - File array
 	 *
-	 * @return bool
+	 * @return  bool
+	 *
+	 * @since   1.0
 	 */
 	public function addFiles($type, $fileArray)
 	{
@@ -83,7 +134,9 @@ class Base extends JTask implements TaskInterface
 	 *
 	 * @param   string  $type  Type (media, component etc.)
 	 *
-	 * @return mixed
+	 * @return  mixed
+	 *
+	 * @since   1.0
 	 */
 	public function  getFiles($type)
 	{
@@ -106,6 +159,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   array  $fileArray  Array of files / folders
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	public function addMediaFiles($fileArray)
 	{
@@ -118,6 +173,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   array  $fileArray  Array of files / folders
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	public function addFrontendFiles($fileArray)
 	{
@@ -130,6 +187,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   array  $fileArray  Array of files / folders
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	public function addBackendFiles($fileArray)
 	{
@@ -142,6 +201,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   array  $fileArray  Array of files / folders
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	public function addFrontendLanguageFiles($fileArray)
 	{
@@ -154,6 +215,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   array  $fileArray  Array of files / folders
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	public function addBackendLanguageFiles($fileArray)
 	{
@@ -166,7 +229,9 @@ class Base extends JTask implements TaskInterface
 	 * @param   string  $path  - Folder path
 	 * @param   string  $tar   - Target path
 	 *
-	 * @return array
+	 * @return  array
+	 *
+	 * @since   1.0
 	 */
 	protected function copyTarget($path, $tar)
 	{
@@ -175,32 +240,27 @@ class Base extends JTask implements TaskInterface
 
 		while ($entry = readdir($hdl))
 		{
-			// Ignore hidden files
-			if (substr($entry, 0, 1) == '.'
-				|| (isset($this->getConfig()->exclude)
-					&& in_array($entry, explode(',', $this->getConfig()->exclude))))
-			{
-				continue;
-			}
-
 			$p = $path . "/" . $entry;
 
-			if (is_file($p))
+			// Ignore hidden files
+			if (substr($entry, 0, 1) != '.')
 			{
-                $map[]  = array("file" => $entry);
-                $target = $tar . "/" . $entry;
-                $this->_copy($p, $target);
+				if (isset($this->getJConfig()->exclude)
+					&& in_array($entry, explode(',', $this->getJConfig()->exclude)))
+				{
+					continue;
+				}
 
-                if (pathinfo($entry, PATHINFO_EXTENSION) != 'ini')
-                {
-                    // Version & Date Replace
-                    $this->replaceInFile($target);
-                }
-            }
-			else
-			{
-				$map[] = array("folder" => $entry);
-				$this->_copyDir($p, $tar . "/" . $entry);
+				if (is_file($p))
+				{
+					$map[] = array("file" => $entry);
+					$this->_copy($p, $tar . "/" . $entry);
+				}
+				else
+				{
+					$map[] = array("folder" => $entry);
+					$this->_copyDir($p, $tar . "/" . $entry);
+				}
 			}
 		}
 
@@ -213,6 +273,8 @@ class Base extends JTask implements TaskInterface
 	 * Get the result files
 	 *
 	 * @return  array
+	 *
+	 * @since   1.0
 	 */
 	public function getResultFiles()
 	{
@@ -225,6 +287,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   array  $resultFiles  - The result of the copying
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	public function setResultFiles($resultFiles)
 	{
@@ -235,6 +299,8 @@ class Base extends JTask implements TaskInterface
 	 * Get the current date (formated for building)
 	 *
 	 * @return  string
+	 *
+	 * @since   1.0
 	 */
 	public function getDate()
 	{
@@ -244,13 +310,13 @@ class Base extends JTask implements TaskInterface
 	/**
 	 * Generate a list of files
 	 *
-	 * @param   array   $files    Files and Folders array
-	 * @param   string  $ext      Extension Name
-	 * @param   string  $extType  Extension Type
+	 * @param   array  $files  Files and Folders array
 	 *
 	 * @return  string
+	 *
+	 * @since   1.0
 	 */
-	public function generateFileList($files, $ext = "", $extType = "")
+	public function generateFileList($files)
 	{
 		if (!count($files))
 		{
@@ -263,14 +329,7 @@ class Base extends JTask implements TaskInterface
 		{
 			foreach ($f as $type => $value)
 			{
-				$p = "";
-
-				if ($value == $ext . ".php")
-				{
-					$p = ' ' . $extType . '="' . $ext . '"';
-				}
-
-				$text[] = "<" . $type . $p . ">" . $value . "</" . $type . ">";
+				$text[] = "<" . $type . ">" . $value . "</" . $type . ">";
 			}
 		}
 
@@ -284,6 +343,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   array  $files  Files and Folders array
 	 *
 	 * @return  string
+	 *
+	 * @since   1.0
 	 */
 	public function generateLanguageFileList($files)
 	{
@@ -312,6 +373,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   string  $plugin  The plugin file
 	 *
 	 * @return  string
+	 *
+	 * @since   1.0
 	 */
 	public function generatePluginFileList($files, $plugin)
 	{
@@ -320,7 +383,25 @@ class Base extends JTask implements TaskInterface
 			return "";
 		}
 
-		return $this->generateFileList($files, $plugin, "plugin");
+		$text = array();
+
+		foreach ($files as $f)
+		{
+			foreach ($f as $type => $value)
+			{
+				$p = "";
+
+				if ($value == $plugin . ".php")
+				{
+					$p = ' plugin="' . $plugin . '"';
+
+				}
+
+				$text[] = "<" . $type . $p . ">" . $value . "</" . $type . ">";
+			}
+		}
+
+		return implode("\n", $text);
 	}
 
 	/**
@@ -330,6 +411,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   string  $module  The module
 	 *
 	 * @return  string
+	 *
+	 * @since   1.0
 	 */
 	public function generateModuleFileList($files, $module)
 	{
@@ -338,13 +421,33 @@ class Base extends JTask implements TaskInterface
 			return "";
 		}
 
-		return $this->generateFileList($files, $module, "module");
+		$text = array();
+
+		foreach ($files as $f)
+		{
+			foreach ($f as $type => $value)
+			{
+				$p = "";
+
+				if ($value == $module . ".php")
+				{
+					$p = ' module="' . $module . '"';
+
+				}
+
+				$text[] = "<" . $type . $p . ">" . $value . "</" . $type . ">";
+			}
+		}
+
+		return implode("\n", $text);
 	}
 
 	/**
 	 * Reset the files list, before build another part
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	public function resetFiles()
 	{
@@ -362,6 +465,8 @@ class Base extends JTask implements TaskInterface
 	 * @param   string  $file  - Path to file
 	 *
 	 * @return  void
+	 *
+	 * @since   1.0
 	 */
 	protected function replaceInFile($file)
 	{
@@ -371,8 +476,8 @@ class Base extends JTask implements TaskInterface
 		}
 
 		$this->taskReplaceInFile($file)
-			->from(array('##DATE##', '##YEAR##', '##VERSION##'))
-			->to(array($this->getDate(), date('Y'), $this->getConfig()->version))
+			->from(array('##DATE##', '##YEAR##', '##VERSION##', '##AUTHOR##', '##AUTHOREMAIL##', '##AUTHORURL##' ,'##COPYRIGHT##'))
+			->to(array($this->getDate(), date('Y'), $this->getJConfig()->version, $this->getJConfig()->author, $this->getJConfig()->authoremail, $this->getJConfig()->authorurl, $this->getJConfig()->copyright
 			->run();
 	}
 }
